@@ -14,7 +14,7 @@ const dbConfig = {
 
 
   async function retrieveListItems() {
-async function addItem(text) {
+async function updateItem(id, newText) {
     try {
       // Create a connection to the database
       const connection = await mysql.createConnection(dbConfig);
@@ -31,14 +31,14 @@ async function addItem(text) {
       // Return the retrieved items as a JSON array
       return rows;
         const connection = await mysql.createConnection(dbConfig);
-        const query = 'INSERT INTO items (text) VALUES (?)';
-        await connection.execute(query, [text]);
+        const query = 'UPDATE items SET text = ? WHERE id = ?';
+        await connection.execute(query, [newText, id]);
         await connection.end();
         return true;
     } catch (error) {
       console.error('Error retrieving list items:', error);
       throw error; // Re-throw the error
-        console.error('Error adding item:', error);
+        console.error('Error updating item:', error);
         throw error;
     }
   }
@@ -85,21 +85,21 @@ async function handleRequest(req, res) {
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Error loading index.html');
         }
-    } else if (req.url === '/add' && req.method === 'POST') {
+    } else if (req.url === '/update' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => {
             body += chunk.toString();
         });
         req.on('end', async () => {
             try {
-                const { text } = JSON.parse(body);
-                await addItem(text);
+                const { id, text } = JSON.parse(body);
+                await updateItem(id, text);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true }));
             } catch (error) {
                 console.error(error);
                 res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, error: 'Failed to add item' }));
+                res.end(JSON.stringify({ success: false, error: 'Failed to update item' }));
             }
         });
     } else {
